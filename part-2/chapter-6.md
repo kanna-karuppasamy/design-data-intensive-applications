@@ -59,3 +59,43 @@ As load increases or nodes fail, the system must move data between nodes. This i
 
 * **Automatic:** Convenient but dangerous. An automated system might misinterpret a temporary network spike as a node failure and trigger a massive, resource-heavy data transfer, further slowing the system (a "cascading failure").
 * **Manual:** Slower but safer. An administrator typically initiates the move, ensuring the system remains stable during the transition.
+
+This section addresses the practical challenge of **Service Discovery**: once data is split across many nodes, how does a client actually find the right IP address for a specific piece of data?
+
+---
+
+## Request Routing: The Service Discovery Problem
+
+As partitions are rebalanced and nodes are added or removed, the mapping of **key  partition  node** is constantly shifting. There are three primary architectural patterns used to handle this:
+
+| Strategy | How it works | Examples |
+| --- | --- | --- |
+| **1. Any Node (Forwarding)** | Client hits any node (often via a load balancer). If that node doesn't have the data, it forwards the request to the correct node. | Cassandra, Riak |
+| **2. Routing Tier** | All requests go to a "partition-aware" load balancer that acts as a traffic cop, routing requests but not handling data. | MongoDB (mongos), Espresso |
+| **3. Client Awareness** | The client stays updated on the cluster state and connects directly to the correct node. | Many custom client libraries |
+
+### Managing Cluster Metadata
+
+The hardest part of routing is ensuring every component agrees on who owns which partition. If they disagree, requests end up in the wrong place.
+
+* **External Coordination (ZooKeeper):** A separate service acts as the "source of truth." Nodes register themselves there, and the routing tier or clients subscribe to updates. When a node fails or rebalances, ZooKeeper notifies everyone to update their routing tables.
+* *Used by:* HBase, Kafka, SolrCloud.
+
+
+* **Gossip Protocols:** Instead of an external service, nodes talk to each other to spread information about cluster changes. This avoids a single point of failure but increases the complexity within the database nodes themselves.
+* *Used by:* Cassandra, Riak.
+
+---
+
+## Parallel Query Execution
+
+While the strategies above work well for simple **key-value** lookups, they are insufficient for complex analytical queries (e.g., "What was the total revenue across all regions last quarter?").
+
+Massively Parallel Processing (**MPP**) databases handle this by:
+
+1. **Breaking queries into stages:** A query optimizer decomposes a complex SQL statement into many small execution steps.
+2. **Parallel scanning:** Different nodes scan their local partitions simultaneously.
+3. **Aggregation:** Results are filtered and joined in parallel across the cluster before being returned to the user.
+
+> **Note:** This level of sophistication is the hallmark of data warehouses and is much more complex than the "scatter/gather" approach used by basic NoSQL stores.
+
