@@ -219,8 +219,6 @@ Limitation:
 
 - Can feel **cumbersome** to break document-like data into multiple tables.
 
-Here is your content **reformatted into a clean, polished, README-friendly Markdown section**, with **zero content reduction** — only improved structure, clarity, and formatting for GitHub readability.
-
 ### **Declarative Querying (Relational Model → SQL)**
 
 Declarative querying means:

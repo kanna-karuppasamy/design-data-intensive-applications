@@ -65,9 +65,8 @@ Part of the **Simian Army**:
 #### 1. Hardware Faults
 
 Hard disks fail, RAM corrupts, cables get unplugged.
-Redundancy and multi-machine clusters reduce impact.
-
 Cloud and scale increase failure frequency — so systems must tolerate node loss without downtime.
+Mitigation: Redundancy and multi-machine clusters reduce impact.
 
 #### 2. Software Errors
 
@@ -166,12 +165,35 @@ Metrics:
 * **p95 / p99**: tail latencies
 * Used in **SLIs/SLOs/SLAs**
 
+The speed limit is defined through a hierarchy of three terms. In your company, this is usually a collaboration between Product Managers (who know what users want) and SRE/Platform Engineers (who know what the infra can handle).
+
+SLA (Service Level Agreement): The Legal/Business limit. It’s the external promise to customers (e.g., "Our API will be available 99.9% of the time"). If you break this, the company pays a penalty (refunds or credits).
+
+SLO (Service Level Objective): The Internal goal. This is usually stricter than the SLA. If the SLA is 500ms, your team might set an SLO of 200ms to give yourselves a "safety buffer".
+
+SLI (Service Level Indicator): The Real-time measurement. This is the actual number coming off your server right now (e.g., "Current p99 is 180ms").
+
 Amazon example:
 
 * +100 ms → -1% sales
 * +1 second → -16% satisfaction
 
 So systems often target p99 or p99.9 response times in their Service Level Objectives (SLOs) or Agreements (SLAs)
+
+#### How is it calculated?
+You don't calculate p99 by simply averaging numbers. To get p99, the "instrument" (monitoring tool) must see a distribution of data. There are two main ways these tools do this:
+
+A. Histograms (The Most Common)
+Instead of storing every single request time (which would kill your memory), the tool creates "buckets".
+
+How it works: Imagine 3 buckets labeled: 0-100ms, 101-500ms, and 500ms+.
+
+As your Go code finishes a request, it just "drops a coin" into the right bucket.
+
+The tool then looks at the buckets and says: "99% of the coins are in the first two buckets, so the p99 must be somewhere around 500ms".
+
+B. Distributions (High Precision)
+Used by tools like Datadog, these track the "sketch" of the data across all your servers globally, giving a much more accurate p99 than simple histograms.
 
 ---
 
