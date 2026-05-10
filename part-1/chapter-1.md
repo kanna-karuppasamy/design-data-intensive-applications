@@ -134,10 +134,13 @@ Main challenge: **fan-out** (distributing a tweet to followers).
 * Reads get very fast and inexpensive
 
 **Final hybrid**
+"Tiered Distribution System" where the system treats a tweet differently depending on who sent it
 
 * Normal users → push tweets (Write-time fan-out)
 * Celebrities → fetch on demand (Read-time fan-out)
-Both these type of fetches are combined based on the account and provided
+Both these type of fetches are combined based on the account followed
+
+This hybrid approach protects the system from Write Amplification (celebrities breaking the database) while maintaining Read Performance for the average user. It's essentially a trade-off: you do a tiny bit of "Read-time" work (fetching celebrity tweets) to avoid a catastrophic amount of "Write-time" work.
 
 ---
 
@@ -193,7 +196,7 @@ As your Go code finishes a request, it just "drops a coin" into the right bucket
 The tool then looks at the buckets and says: "99% of the coins are in the first two buckets, so the p99 must be somewhere around 500ms".
 
 B. Distributions (High Precision)
-Used by tools like Datadog, these track the "sketch" of the data across all your servers globally, giving a much more accurate p99 than simple histograms.
+Used by tools like Datadog, these track the "sketch" of the data across all your servers globally, giving a much more accurate p99 than simple histograms. A "Sketch" is a probabilistic data structure that provides an approximate summary of a massive data stream using a very small, fixed amount of memory. In the world of monitoring, if a Histogram is a series of "physical buckets" you've built on the floor, a Sketch is more like a "smart, squishy map" that expands and contracts to fit your data perfectly.
 
 ---
 
@@ -239,8 +242,6 @@ It is well known that the majority of the cost of software is not in its initial
 Yet, unfortunately, many people working on software systems dislike maintenance of so-called legacy systems—perhaps it involves fixing other people’s mistakes, or working with platforms that are now outdated, or systems that were forced to do things they were never intended for. Every legacy system is unpleasant in its own way, and so it is difficult to give general recommendations for dealing with them. However, we can and should design software in such a way that it will hopefully minimize pain during maintenance, and thus avoid creating legacy software ourselves.
 
 To avoid creating painful legacy systems, we focus on:
-
----
 
 ### 3.1 Operability
 

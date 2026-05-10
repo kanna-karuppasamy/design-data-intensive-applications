@@ -74,6 +74,8 @@ ORM tools like **Hibernate** and **ActiveRecord** try to bridge this gap, but **
 * User → separate tables (positions, education, contacts)
 * Requires joins / multiple queries
 
+Tools like Hibernate or GORM (for Go) exist specifically to write the SELECT * FROM ... JOIN ... code for you. However, they can't fix the performance cost of the joins—they just hide the "ugly" SQL from your view.
+
 **Document:**
 
 ```json
